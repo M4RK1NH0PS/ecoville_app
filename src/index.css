@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-royal: #0057D9;
+  --color-blue-dark: #003FA3;
+  --color-yellow: #FFD400;
+  --color-green: #22C55E;
+  --color-sky: #0EA5E9;
+  --color-bg: #F5F7FA;
+  --color-dark: #1F2937;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+  --color-card: #FFFFFF;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-search: 0 4px 20px rgba(0, 87, 217, 0.12);
+  --shadow-nav: 0 -2px 16px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out forwards;
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.shadow-search {
+  box-shadow: var(--shadow-search);
+}
+
+.shadow-nav {
+  box-shadow: var(--shadow-nav);
+}
