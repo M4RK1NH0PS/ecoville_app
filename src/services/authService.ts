@@ -45,7 +45,7 @@ export async function loginUser({ email, password }: LoginPayload) {
 }
 
 export async function logoutUser() {
-  const { error } = await supabase.auth.signOut()
+  const { error } = await supabase.auth.signOut({ scope: 'local' })
   if (error) throw error
 }
 

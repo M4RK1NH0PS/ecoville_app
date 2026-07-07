@@ -3,7 +3,8 @@ import { CartProvider } from './context/CartContext'
 import { CatalogProvider } from './context/CatalogContext'
 import { AuthGate } from './routes/AuthGate'
 import { PublicOnlyRoute } from './routes/PublicOnlyRoute'
-import { ProtectedAppLayout } from './routes/ProtectedAppLayout'
+import { ProtectedRoute } from './routes/ProtectedRoute'
+import { ProtectedPageLayout } from './routes/ProtectedPageLayout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/Home'
@@ -43,21 +44,103 @@ export default function App() {
                 }
               />
 
-              <Route element={<ProtectedAppLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/home" element={<Navigate to="/" replace />} />
-                <Route path="/welcome" element={<Splash />} />
-                <Route path="/catalog" element={<Catalog />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/resolve" element={<ResolveStain />} />
-                <Route path="/assistant" element={<AIAssistant />} />
-                <Route path="/my-home" element={<MyHome />} />
-                <Route path="/my-business" element={<MyBusiness />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/reorder" element={<Reorder />} />
-                <Route path="/offers" element={<Offers />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
+              <Route
+                path="/"
+                element={
+                  <ProtectedPageLayout>
+                    <HomePage />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route path="/home" element={<Navigate to="/" replace />} />
+              <Route
+                path="/welcome"
+                element={
+                  <ProtectedRoute>
+                    <Splash />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/catalog"
+                element={
+                  <ProtectedPageLayout>
+                    <Catalog />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/product/:id"
+                element={
+                  <ProtectedPageLayout>
+                    <ProductDetail />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/resolve"
+                element={
+                  <ProtectedPageLayout>
+                    <ResolveStain />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/assistant"
+                element={
+                  <ProtectedPageLayout>
+                    <AIAssistant />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/my-home"
+                element={
+                  <ProtectedPageLayout>
+                    <MyHome />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/my-business"
+                element={
+                  <ProtectedPageLayout>
+                    <MyBusiness />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/cart"
+                element={
+                  <ProtectedPageLayout>
+                    <CartPage />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/reorder"
+                element={
+                  <ProtectedPageLayout>
+                    <Reorder />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/offers"
+                element={
+                  <ProtectedPageLayout>
+                    <Offers />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedPageLayout>
+                    <Profile />
+                  </ProtectedPageLayout>
+                }
+              />
 
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
