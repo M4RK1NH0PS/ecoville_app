@@ -23,7 +23,7 @@ export default function Splash() {
             fullWidth
             size="lg"
             className="!bg-yellow !text-dark !shadow-yellow/30 hover:!bg-yellow/90"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/')}
           >
             Começar
           </PrimaryButton>

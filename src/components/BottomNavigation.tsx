@@ -3,7 +3,7 @@ import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 
 const navItems = [
-  { to: '/home', label: 'Início', icon: Home },
+  { to: '/', label: 'Início', icon: Home },
   { to: '/catalog', label: 'Categorias', icon: LayoutGrid },
   { to: '/cart', label: 'Pedidos', icon: ShoppingBag },
   { to: '/profile', label: 'Conta', icon: User },
@@ -19,6 +19,7 @@ export default function BottomNavigation() {
           <NavLink
             key={to}
             to={to}
+            end={to === '/'}
             className={({ isActive }) =>
               `relative flex min-w-[64px] flex-col items-center gap-1 px-2 py-1 transition-colors ${
                 isActive ? 'text-royal' : 'text-muted'
