@@ -26,6 +26,8 @@ export async function registerUser({
   endereco,
   numero,
   complemento,
+  latitude,
+  longitude,
 }: RegisterPayload) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -43,6 +45,8 @@ export async function registerUser({
         endereco,
         numero,
         complemento: complemento || null,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
       },
     },
   })

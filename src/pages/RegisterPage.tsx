@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Loader2, MapPin } from 'lucide-react'
+import { CheckCircle2, Loader2, MapPin, Navigation } from 'lucide-react'
 import Logo from '../components/Logo'
 import Input from '../components/Input'
 import PrimaryButton from '../components/PrimaryButton'
+import SecondaryButton from '../components/SecondaryButton'
 import { registerUser } from '../services/authService'
 import { getAuthErrorMessage } from '../utils/authErrors'
 import { EMPTY_LOCATION, type RegisterFormValues } from '../types/auth'
@@ -25,6 +26,8 @@ export default function RegisterPage() {
     ...EMPTY_LOCATION,
   })
   const [loading, setLoading] = useState(false)
+  const [capturingGeo, setCapturingGeo] = useState(false)
+  const [geoMessage, setGeoMessage] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
@@ -33,6 +36,38 @@ export default function RegisterPage() {
     value: RegisterFormValues[K],
   ) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setGeoMessage(
+        'Não foi possível acessar sua localização. Você pode continuar preenchendo o endereço manualmente.',
+      )
+      return
+    }
+
+    setCapturingGeo(true)
+    setGeoMessage('')
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateField('latitude', position.coords.latitude)
+        updateField('longitude', position.coords.longitude)
+        setGeoMessage('Localização capturada com sucesso')
+        setCapturingGeo(false)
+      },
+      () => {
+        setGeoMessage(
+          'Não foi possível acessar sua localização. Você pode continuar preenchendo o endereço manualmente.',
+        )
+        setCapturingGeo(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
+    )
   }
 
   function validate(): string | null {
@@ -78,6 +113,8 @@ export default function RegisterPage() {
         endereco: form.endereco.trim(),
         numero: form.numero.trim(),
         complemento: form.complemento?.trim() || undefined,
+        latitude: form.latitude ?? null,
+        longitude: form.longitude ?? null,
       })
       setSuccess(true)
     } catch (err) {
@@ -108,6 +145,8 @@ export default function RegisterPage() {
       </div>
     )
   }
+
+  const hasCoordinates = form.latitude != null && form.longitude != null
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg pb-8">
@@ -165,6 +204,43 @@ export default function RegisterPage() {
                 </p>
               </div>
             </div>
+
+            <SecondaryButton
+              type="button"
+              fullWidth
+              disabled={capturingGeo}
+              onClick={handleUseCurrentLocation}
+            >
+              {capturingGeo ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Obtendo localização...
+                </>
+              ) : (
+                <>
+                  <Navigation size={18} />
+                  Usar minha localização atual
+                </>
+              )}
+            </SecondaryButton>
+
+            {geoMessage && (
+              <p
+                className={`rounded-xl px-3 py-2 text-sm ${
+                  hasCoordinates
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-amber-50 text-amber-700'
+                }`}
+              >
+                {geoMessage}
+              </p>
+            )}
+
+            {hasCoordinates && (
+              <p className="text-xs text-muted">
+                Coordenadas: {form.latitude?.toFixed(5)}, {form.longitude?.toFixed(5)}
+              </p>
+            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input

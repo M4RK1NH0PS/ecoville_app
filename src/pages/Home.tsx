@@ -6,13 +6,16 @@ import SearchBar from '../components/SearchBar'
 import SearchResults from '../components/SearchResults'
 import HomeActionCard from '../components/HomeActionCard'
 import PromoBanner from '../components/PromoBanner'
+import NearestStoreCard from '../components/NearestStoreCard'
 import { buscarProdutos } from '../utils/searchProducts'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import { useCatalog } from '../context/CatalogContext'
+import { useUserStore } from '../hooks/useUserStore'
 
 export default function HomePage() {
   const navigate = useNavigate()
   const { products: catalogProducts } = useCatalog()
+  const { store, loadingStore } = useUserStore()
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query, 300)
 
@@ -99,6 +102,10 @@ export default function HomePage() {
         />
       ) : (
         <>
+          <section className="px-4 pt-5">
+            <NearestStoreCard store={store} loading={loadingStore} compact />
+          </section>
+
           <section className="space-y-3 px-4 pt-5">
             {actionCards.map((card) => (
               <HomeActionCard key={card.title} {...card} />

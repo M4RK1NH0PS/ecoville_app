@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   User,
   MapPin,
-  Store,
-  MessageCircle,
   Edit,
   Package,
   Heart,
@@ -12,67 +10,18 @@ import {
   Loader2,
 } from 'lucide-react'
 import Header from '../components/Header'
-import SecondaryButton from '../components/SecondaryButton'
+import NearestStoreCard from '../components/NearestStoreCard'
 import { useAuth } from '../context/AuthContext'
+import { useUserStore } from '../hooks/useUserStore'
 import { logoutUser } from '../services/authService'
-import { getProfile } from '../services/profileService'
 import { getAuthErrorMessage } from '../utils/authErrors'
-import {
-  formatProfileLocation,
-  getNearestStoreLabel,
-  getStoreWhatsAppLabel,
-  type Profile,
-} from '../types/auth'
+import { formatProfileLocation } from '../types/auth'
 
 export default function Profile() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loadingProfile, setLoadingProfile] = useState(false)
-  const [profileError, setProfileError] = useState('')
+  const { profile, store, loadingProfile, loadingStore, error } = useUserStore()
   const [loggingOut, setLoggingOut] = useState(false)
-
-  useEffect(() => {
-    if (!user?.id) {
-      setProfile(null)
-      setProfileError('')
-      setLoadingProfile(false)
-      return
-    }
-
-    let mounted = true
-
-    const userId = user.id
-
-    async function loadProfile() {
-      setLoadingProfile(true)
-      setProfileError('')
-
-      try {
-        const data = await getProfile(userId)
-        if (mounted) {
-          setProfile(data)
-        }
-      } catch (err) {
-        if (mounted) {
-          setProfile(null)
-          const message =
-            err instanceof Error ? err.message : 'Não foi possível carregar o perfil.'
-          setProfileError(getAuthErrorMessage(message))
-        }
-      } finally {
-        if (mounted) {
-          setLoadingProfile(false)
-        }
-      }
-    }
-
-    loadProfile()
-
-    return () => {
-      mounted = false
-    }
-  }, [user?.id])
 
   const nome =
     profile?.nome?.trim() ||
@@ -87,9 +36,6 @@ export default function Profile() {
     '—'
 
   const cidadeLabel = formatProfileLocation(profile)
-  const lojaLabel = getNearestStoreLabel(profile)
-  const whatsappLabel = getStoreWhatsAppLabel()
-  const hasStoreWhatsApp = false
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -122,8 +68,8 @@ export default function Profile() {
           </div>
         )}
 
-        {profileError && !loadingProfile && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{profileError}</p>
+        {error && !loadingProfile && (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
         )}
 
         {!loadingProfile && (
@@ -143,14 +89,9 @@ export default function Profile() {
             <div className="space-y-3">
               <InfoRow icon={User} label="Telefone" value={telefone} />
               <InfoRow icon={MapPin} label="Cidade" value={cidadeLabel} />
-              <InfoRow icon={Store} label="Loja mais próxima" value={lojaLabel} />
-              <InfoRow icon={MessageCircle} label="WhatsApp da loja" value={whatsappLabel} />
             </div>
 
-            <SecondaryButton fullWidth disabled={!hasStoreWhatsApp}>
-              <MessageCircle size={18} />
-              Falar com a loja
-            </SecondaryButton>
+            <NearestStoreCard store={store} loading={loadingStore} />
 
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               {menuItems.map((item, i) => (

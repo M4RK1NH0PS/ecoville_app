@@ -7,6 +7,8 @@ export type UserLocationFields = {
   endereco: string
   numero: string
   complemento?: string
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export type RegisterFormValues = {
@@ -32,6 +34,8 @@ export const EMPTY_LOCATION: UserLocationFields = {
   endereco: '',
   numero: '',
   complemento: '',
+  latitude: null,
+  longitude: null,
 }
 
 export type Profile = {
@@ -47,6 +51,9 @@ export type Profile = {
   endereco: string | null
   numero: string | null
   complemento: string | null
+  latitude: number | null
+  longitude: number | null
+  loja_preferida_id: string | null
   created_at?: string
   updated_at?: string
 }
@@ -68,18 +75,3 @@ export function formatProfileLocation(profile: Profile | null): string {
 
   return 'Localização não informada'
 }
-
-export function getNearestStoreLabel(profile: Profile | null): string {
-  const hasLocation = Boolean(profile?.cidade?.trim() && profile?.estado?.trim())
-
-  if (!hasLocation) {
-    return 'Cadastre sua localização para encontrar a loja mais próxima'
-  }
-
-  return 'Loja ainda não definida'
-}
-
-export function getStoreWhatsAppLabel(): string {
-  return 'WhatsApp não disponível'
-}
-
