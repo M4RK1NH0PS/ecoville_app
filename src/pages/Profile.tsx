@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   User,
@@ -13,23 +13,83 @@ import {
 } from 'lucide-react'
 import Header from '../components/Header'
 import SecondaryButton from '../components/SecondaryButton'
-import { userProfile, openWhatsApp } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { logoutUser } from '../services/authService'
+import { getProfile } from '../services/profileService'
 import { getAuthErrorMessage } from '../utils/authErrors'
+import {
+  formatProfileLocation,
+  getNearestStoreLabel,
+  getStoreWhatsAppLabel,
+  type Profile,
+} from '../types/auth'
 
 export default function Profile() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loadingProfile, setLoadingProfile] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
 
+  useEffect(() => {
+    if (!user?.id) {
+      setProfile(null)
+      setProfileError('')
+      setLoadingProfile(false)
+      return
+    }
+
+    let mounted = true
+
+    const userId = user.id
+
+    async function loadProfile() {
+      setLoadingProfile(true)
+      setProfileError('')
+
+      try {
+        const data = await getProfile(userId)
+        if (mounted) {
+          setProfile(data)
+        }
+      } catch (err) {
+        if (mounted) {
+          setProfile(null)
+          const message =
+            err instanceof Error ? err.message : 'Não foi possível carregar o perfil.'
+          setProfileError(getAuthErrorMessage(message))
+        }
+      } finally {
+        if (mounted) {
+          setLoadingProfile(false)
+        }
+      }
+    }
+
+    loadProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [user?.id])
+
   const nome =
-    (user?.user_metadata?.nome as string | undefined) ??
-    user?.email?.split('@')[0] ??
-    userProfile.nome
+    profile?.nome?.trim() ||
+    (user?.user_metadata?.nome as string | undefined)?.trim() ||
+    user?.email?.split('@')[0] ||
+    '—'
 
   const email = user?.email ?? '—'
-  const telefone = (user?.user_metadata?.telefone as string | undefined) ?? '—'
+  const telefone =
+    profile?.telefone?.trim() ||
+    (user?.user_metadata?.telefone as string | undefined)?.trim() ||
+    '—'
+
+  const cidadeLabel = formatProfileLocation(profile)
+  const lojaLabel = getNearestStoreLabel(profile)
+  const whatsappLabel = getStoreWhatsAppLabel()
+  const hasStoreWhatsApp = false
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -55,61 +115,73 @@ export default function Profile() {
       <Header title="Perfil" />
 
       <div className="px-4 space-y-5">
-        <div className="rounded-2xl bg-gradient-to-br from-royal to-sky p-6 text-white text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
-            <User size={32} />
+        {loadingProfile && (
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-8 shadow-sm">
+            <Loader2 size={22} className="animate-spin text-royal" />
+            <span className="text-sm font-medium text-muted">Carregando perfil...</span>
           </div>
-          <h2 className="text-xl font-extrabold">{nome}</h2>
-          <p className="mt-1 text-sm text-white/80">{email}</p>
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-            <User size={12} />
-            Pessoa física
-          </div>
-        </div>
+        )}
 
-        <div className="space-y-3">
-          <InfoRow icon={User} label="Telefone" value={telefone} />
-          <InfoRow icon={MapPin} label="Cidade" value={userProfile.cidade} />
-          <InfoRow icon={Store} label="Loja mais próxima" value={userProfile.lojaMaisProxima} />
-          <InfoRow icon={MessageCircle} label="WhatsApp da loja" value={userProfile.whatsappLoja} />
-        </div>
+        {profileError && !loadingProfile && (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{profileError}</p>
+        )}
 
-        <SecondaryButton
-          fullWidth
-          onClick={() => openWhatsApp('Olá! Preciso de ajuda com produtos Ecoville.')}
-        >
-          <MessageCircle size={18} />
-          Falar com a loja
-        </SecondaryButton>
+        {!loadingProfile && (
+          <>
+            <div className="rounded-2xl bg-gradient-to-br from-royal to-sky p-6 text-white text-center">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                <User size={32} />
+              </div>
+              <h2 className="text-xl font-extrabold">{nome}</h2>
+              <p className="mt-1 text-sm text-white/80">{email}</p>
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                <User size={12} />
+                Pessoa física
+              </div>
+            </div>
 
-        <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
-          {menuItems.map((item, i) => (
+            <div className="space-y-3">
+              <InfoRow icon={User} label="Telefone" value={telefone} />
+              <InfoRow icon={MapPin} label="Cidade" value={cidadeLabel} />
+              <InfoRow icon={Store} label="Loja mais próxima" value={lojaLabel} />
+              <InfoRow icon={MessageCircle} label="WhatsApp da loja" value={whatsappLabel} />
+            </div>
+
+            <SecondaryButton fullWidth disabled={!hasStoreWhatsApp}>
+              <MessageCircle size={18} />
+              Falar com a loja
+            </SecondaryButton>
+
+            <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
+              {menuItems.map((item, i) => (
+                <button
+                  key={item.label}
+                  onClick={item.action}
+                  className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-bg ${
+                    i > 0 ? 'border-t border-gray-100' : ''
+                  }`}
+                >
+                  <item.icon size={20} className="text-royal" />
+                  <span className="text-sm font-semibold text-dark">{item.label}</span>
+                </button>
+              ))}
+            </div>
+
             <button
-              key={item.label}
-              onClick={item.action}
-              className={`flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-bg ${
-                i > 0 ? 'border-t border-gray-100' : ''
-              }`}
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-50 py-3.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-100 disabled:opacity-60"
             >
-              <item.icon size={20} className="text-royal" />
-              <span className="text-sm font-semibold text-dark">{item.label}</span>
+              {loggingOut ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <LogOut size={18} />
+              )}
+              Sair da conta
             </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-red-50 py-3.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-100 disabled:opacity-60"
-        >
-          {loggingOut ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <LogOut size={18} />
-          )}
-          Sair da conta
-        </button>
+          </>
+        )}
       </div>
     </div>
   )
