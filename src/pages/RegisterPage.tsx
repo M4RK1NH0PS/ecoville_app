@@ -1,19 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Loader2, MapPin, Navigation } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import Logo from '../components/Logo'
 import Input from '../components/Input'
+import LocationFormSection from '../components/LocationFormSection'
 import PrimaryButton from '../components/PrimaryButton'
-import SecondaryButton from '../components/SecondaryButton'
 import { registerUser } from '../services/authService'
 import { getAuthErrorMessage } from '../utils/authErrors'
 import { EMPTY_LOCATION, type RegisterFormValues } from '../types/auth'
-
-function formatCep(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 8)
-  if (digits.length <= 5) return digits
-  return `${digits.slice(0, 5)}-${digits.slice(5)}`
-}
+import { useLocationForm, validateLocationFields } from '../hooks/useLocationForm'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -26,10 +21,20 @@ export default function RegisterPage() {
     ...EMPTY_LOCATION,
   })
   const [loading, setLoading] = useState(false)
-  const [capturingGeo, setCapturingGeo] = useState(false)
-  const [geoMessage, setGeoMessage] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  const {
+    values: location,
+    updateField: updateLocationField,
+    geoMessage,
+    cepMessage,
+    capturingGeo,
+    loadingCep,
+    hasCoordinates,
+    handleUseCurrentLocation,
+    handleCepChange,
+  } = useLocationForm(EMPTY_LOCATION)
 
   function updateField<K extends keyof RegisterFormValues>(
     field: K,
@@ -38,49 +43,11 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  function handleUseCurrentLocation() {
-    if (!navigator.geolocation) {
-      setGeoMessage(
-        'Não foi possível acessar sua localização. Você pode continuar preenchendo o endereço manualmente.',
-      )
-      return
-    }
-
-    setCapturingGeo(true)
-    setGeoMessage('')
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        updateField('latitude', position.coords.latitude)
-        updateField('longitude', position.coords.longitude)
-        setGeoMessage('Localização capturada com sucesso')
-        setCapturingGeo(false)
-      },
-      () => {
-        setGeoMessage(
-          'Não foi possível acessar sua localização. Você pode continuar preenchendo o endereço manualmente.',
-        )
-        setCapturingGeo(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      },
-    )
-  }
-
   function validate(): string | null {
     if (!form.nome.trim()) return 'Nome é obrigatório.'
     if (!form.email.trim()) return 'E-mail é obrigatório.'
-    if (!form.pais.trim()) return 'País é obrigatório.'
-    if (!form.estado.trim()) return 'Estado é obrigatório.'
-    if (!form.cidade.trim()) return 'Cidade é obrigatória.'
-    if (!form.bairro.trim()) return 'Bairro é obrigatório.'
-    if (!form.cep.trim()) return 'CEP é obrigatório.'
-    if (form.cep.replace(/\D/g, '').length !== 8) return 'Informe um CEP válido.'
-    if (!form.endereco.trim()) return 'Endereço é obrigatório.'
-    if (!form.numero.trim()) return 'Número é obrigatório.'
+    const locationError = validateLocationFields(location)
+    if (locationError) return locationError
     if (!form.password) return 'Senha é obrigatória.'
     if (form.password.length < 6) return 'A senha precisa ter pelo menos 6 caracteres.'
     if (form.password !== form.confirmPassword) return 'As senhas não coincidem.'
@@ -105,16 +72,15 @@ export default function RegisterPage() {
         email: form.email.trim(),
         telefone: form.telefone.trim() || undefined,
         password: form.password,
-        pais: form.pais.trim(),
-        estado: form.estado.trim(),
-        cidade: form.cidade.trim(),
-        bairro: form.bairro.trim(),
-        cep: form.cep.trim(),
-        endereco: form.endereco.trim(),
-        numero: form.numero.trim(),
-        complemento: form.complemento?.trim() || undefined,
-        latitude: form.latitude ?? null,
-        longitude: form.longitude ?? null,
+        cep: location.cep.trim(),
+        estado: location.estado.trim(),
+        cidade: location.cidade.trim(),
+        bairro: location.bairro.trim(),
+        endereco: location.endereco.trim(),
+        numero: location.numero.trim(),
+        complemento: location.complemento?.trim() || undefined,
+        latitude: location.latitude ?? null,
+        longitude: location.longitude ?? null,
       })
       setSuccess(true)
     } catch (err) {
@@ -145,8 +111,6 @@ export default function RegisterPage() {
       </div>
     )
   }
-
-  const hasCoordinates = form.latitude != null && form.longitude != null
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg pb-8">
@@ -189,118 +153,17 @@ export default function RegisterPage() {
             autoComplete="tel"
           />
 
-          <section className="space-y-4 border-t border-gray-100 pt-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-royal/10">
-                <MapPin size={18} className="text-royal" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-dark">
-                  Localização para atendimento
-                </h2>
-                <p className="mt-1 text-xs leading-relaxed text-muted">
-                  Usamos sua localização para indicar a loja Ecoville mais próxima e
-                  melhorar seu atendimento.
-                </p>
-              </div>
-            </div>
-
-            <SecondaryButton
-              type="button"
-              fullWidth
-              disabled={capturingGeo}
-              onClick={handleUseCurrentLocation}
-            >
-              {capturingGeo ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Obtendo localização...
-                </>
-              ) : (
-                <>
-                  <Navigation size={18} />
-                  Usar minha localização atual
-                </>
-              )}
-            </SecondaryButton>
-
-            {geoMessage && (
-              <p
-                className={`rounded-xl px-3 py-2 text-sm ${
-                  hasCoordinates
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-amber-50 text-amber-700'
-                }`}
-              >
-                {geoMessage}
-              </p>
-            )}
-
-            {hasCoordinates && (
-              <p className="text-xs text-muted">
-                Coordenadas: {form.latitude?.toFixed(5)}, {form.longitude?.toFixed(5)}
-              </p>
-            )}
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="País"
-                placeholder="Brasil"
-                value={form.pais}
-                onChange={(e) => updateField('pais', e.target.value)}
-                autoComplete="country-name"
-              />
-              <Input
-                label="Estado"
-                placeholder="Ex: SP"
-                value={form.estado}
-                onChange={(e) => updateField('estado', e.target.value)}
-                autoComplete="address-level1"
-              />
-              <Input
-                label="Cidade"
-                placeholder="Sua cidade"
-                value={form.cidade}
-                onChange={(e) => updateField('cidade', e.target.value)}
-                autoComplete="address-level2"
-              />
-              <Input
-                label="Bairro"
-                placeholder="Seu bairro"
-                value={form.bairro}
-                onChange={(e) => updateField('bairro', e.target.value)}
-              />
-              <Input
-                label="CEP"
-                placeholder="00000-000"
-                inputMode="numeric"
-                value={form.cep}
-                onChange={(e) => updateField('cep', formatCep(e.target.value))}
-                autoComplete="postal-code"
-              />
-              <div className="sm:col-span-2">
-                <Input
-                  label="Endereço"
-                  placeholder="Rua, avenida..."
-                  value={form.endereco}
-                  onChange={(e) => updateField('endereco', e.target.value)}
-                  autoComplete="street-address"
-                />
-              </div>
-              <Input
-                label="Número"
-                placeholder="123"
-                value={form.numero}
-                onChange={(e) => updateField('numero', e.target.value)}
-              />
-              <Input
-                label="Complemento"
-                placeholder="Apto, bloco... (opcional)"
-                value={form.complemento ?? ''}
-                onChange={(e) => updateField('complemento', e.target.value)}
-              />
-            </div>
-          </section>
+          <LocationFormSection
+            values={location}
+            geoMessage={geoMessage}
+            cepMessage={cepMessage}
+            capturingGeo={capturingGeo}
+            loadingCep={loadingCep}
+            hasCoordinates={hasCoordinates}
+            onUseCurrentLocation={handleUseCurrentLocation}
+            onCepChange={handleCepChange}
+            onFieldChange={updateLocationField}
+          />
 
           <Input
             label="Senha"

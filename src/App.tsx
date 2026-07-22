@@ -18,6 +18,7 @@ import CartPage from './pages/Cart'
 import Reorder from './pages/Reorder'
 import Offers from './pages/Offers'
 import Profile from './pages/Profile'
+import UpdateLocationPage from './pages/UpdateLocationPage'
 import Splash from './pages/Splash'
 
 export default function App() {
@@ -130,6 +131,14 @@ export default function App() {
                 element={
                   <ProtectedPageLayout>
                     <Offers />
+                  </ProtectedPageLayout>
+                }
+              />
+              <Route
+                path="/profile/location"
+                element={
+                  <ProtectedPageLayout>
+                    <UpdateLocationPage />
                   </ProtectedPageLayout>
                 }
               />

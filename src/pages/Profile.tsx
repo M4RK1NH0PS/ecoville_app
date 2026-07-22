@@ -91,7 +91,11 @@ export default function Profile() {
               <InfoRow icon={MapPin} label="Cidade" value={cidadeLabel} />
             </div>
 
-            <NearestStoreCard store={store} loading={loadingStore} />
+            <NearestStoreCard
+              store={store}
+              loading={loadingStore}
+              onUpdateLocation={() => navigate('/profile/location')}
+            />
 
             <div className="rounded-2xl bg-white shadow-sm overflow-hidden">
               {menuItems.map((item, i) => (

@@ -1,5 +1,4 @@
 export type UserLocationFields = {
-  pais: string
   estado: string
   cidade: string
   bairro: string
@@ -26,7 +25,6 @@ export type UserAuthMetadata = {
 } & UserLocationFields
 
 export const EMPTY_LOCATION: UserLocationFields = {
-  pais: 'Brasil',
   estado: '',
   cidade: '',
   bairro: '',

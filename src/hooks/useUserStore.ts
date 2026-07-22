@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import { findNearestStore } from '../services/storeService'
-import { getAuthErrorMessage } from '../utils/authErrors'
 import type { Profile } from '../types/auth'
 import type { StoreWithDistance } from '../types/store'
 
@@ -14,6 +13,44 @@ export function useUserStore() {
   const [loadingStore, setLoadingStore] = useState(false)
   const [error, setError] = useState('')
 
+  const loadUserStore = useCallback(async (userId: string, mounted: { current: boolean }) => {
+    setLoadingProfile(true)
+    setLoadingStore(false)
+    setError('')
+    setStore(null)
+
+    try {
+      const profileData = await getProfile(userId)
+      if (!mounted.current) return
+
+      setProfile(profileData)
+      setLoadingProfile(false)
+      setLoadingStore(true)
+
+      try {
+        const nearestStore = await findNearestStore(profileData)
+        if (mounted.current) {
+          setStore(nearestStore)
+        }
+      } catch {
+        if (mounted.current) {
+          setStore(null)
+        }
+      }
+    } catch {
+      if (mounted.current) {
+        setProfile(null)
+        setStore(null)
+        setError('Não foi possível carregar seus dados agora.')
+      }
+    } finally {
+      if (mounted.current) {
+        setLoadingProfile(false)
+        setLoadingStore(false)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (!user?.id) {
       setProfile(null)
@@ -24,49 +61,22 @@ export function useUserStore() {
       return
     }
 
-    let mounted = true
+    const mounted = { current: true }
     const userId = user.id
 
-    async function loadUserStore() {
-      setLoadingProfile(true)
-      setLoadingStore(false)
-      setError('')
-      setStore(null)
+    loadUserStore(userId, mounted)
 
-      try {
-        const profileData = await getProfile(userId)
-        if (!mounted) return
-
-        setProfile(profileData)
-        setLoadingProfile(false)
-        setLoadingStore(true)
-
-        const nearestStore = await findNearestStore(profileData)
-        if (mounted) {
-          setStore(nearestStore)
-        }
-      } catch (err) {
-        if (mounted) {
-          setProfile(null)
-          setStore(null)
-          const message =
-            err instanceof Error ? err.message : 'Não foi possível carregar os dados.'
-          setError(getAuthErrorMessage(message))
-        }
-      } finally {
-        if (mounted) {
-          setLoadingProfile(false)
-          setLoadingStore(false)
-        }
-      }
+    function handleLocationUpdated() {
+      loadUserStore(userId, mounted)
     }
 
-    loadUserStore()
+    window.addEventListener('ecoville:location-updated', handleLocationUpdated)
 
     return () => {
-      mounted = false
+      mounted.current = false
+      window.removeEventListener('ecoville:location-updated', handleLocationUpdated)
     }
-  }, [user?.id])
+  }, [user?.id, loadUserStore])
 
   return {
     profile,

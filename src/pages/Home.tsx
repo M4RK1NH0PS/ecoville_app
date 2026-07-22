@@ -103,7 +103,12 @@ export default function HomePage() {
       ) : (
         <>
           <section className="px-4 pt-5">
-            <NearestStoreCard store={store} loading={loadingStore} compact />
+            <NearestStoreCard
+              store={store}
+              loading={loadingStore}
+              compact
+              onUpdateLocation={() => navigate('/profile/location')}
+            />
           </section>
 
           <section className="space-y-3 px-4 pt-5">
