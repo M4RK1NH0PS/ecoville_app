@@ -1,11 +1,12 @@
 import { supabase } from '../lib/supabaseClient'
+import type { UserLocationFields } from '../types/auth'
 
 export type RegisterPayload = {
   nome: string
   email: string
   telefone?: string
   password: string
-}
+} & UserLocationFields
 
 export type LoginPayload = {
   email: string
@@ -17,6 +18,14 @@ export async function registerUser({
   email,
   telefone,
   password,
+  pais,
+  estado,
+  cidade,
+  bairro,
+  cep,
+  endereco,
+  numero,
+  complemento,
 }: RegisterPayload) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -26,6 +35,14 @@ export async function registerUser({
         nome,
         telefone,
         tipo_cliente: 'pessoa_fisica',
+        pais,
+        estado,
+        cidade,
+        bairro,
+        cep,
+        endereco,
+        numero,
+        complemento: complemento || null,
       },
     },
   })
