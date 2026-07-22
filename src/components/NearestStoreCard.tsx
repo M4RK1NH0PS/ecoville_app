@@ -1,16 +1,14 @@
 import { Loader2, MapPin, MessageCircle, Navigation, Store } from 'lucide-react'
 import PrimaryButton from './PrimaryButton'
 import SecondaryButton from './SecondaryButton'
-import {
-  DEFAULT_ECOVILLE_WHATSAPP,
-  NO_COVERAGE_MESSAGE,
-} from '../data/storeCoverage'
 import type { DisplayStore } from '../types/store'
+import { NO_STORE_MESSAGE } from '../types/store'
 import {
   formatDistanceKm,
   formatDisplayStoreCityState,
+  openStoreContact,
   openStoreDirections,
-  openStoreWhatsApp,
+  openSupportWhatsApp,
 } from '../utils/storeLinks'
 
 type NearestStoreCardProps = {
@@ -36,13 +34,15 @@ export default function NearestStoreCard({
         }`}
       >
         <Loader2 size={20} className="animate-spin text-royal" />
-        <span className="text-sm font-medium text-muted">Buscando loja mais próxima...</span>
+        <span className="text-sm font-medium text-muted">
+          Buscando loja Ecoville próxima...
+        </span>
       </div>
     )
   }
 
   if (!store) {
-    const message = emptyMessage ?? NO_COVERAGE_MESSAGE
+    const message = emptyMessage ?? NO_STORE_MESSAGE
 
     return (
       <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -59,13 +59,9 @@ export default function NearestStoreCard({
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2">
-          <PrimaryButton
-            fullWidth
-            size="sm"
-            onClick={() => openStoreWhatsApp(DEFAULT_ECOVILLE_WHATSAPP)}
-          >
+          <PrimaryButton fullWidth size="sm" onClick={openSupportWhatsApp}>
             <MessageCircle size={16} />
-            Falar no WhatsApp
+            Falar com atendimento
           </PrimaryButton>
 
           {onUpdateLocation && (
@@ -80,7 +76,6 @@ export default function NearestStoreCard({
   }
 
   const cityState = formatDisplayStoreCityState(store)
-  const whatsapp = store.whatsapp?.trim()
   const phone = store.telefone?.trim()
 
   if (compact) {
@@ -105,12 +100,7 @@ export default function NearestStoreCard({
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <PrimaryButton
-            fullWidth
-            size="sm"
-            disabled={!whatsapp}
-            onClick={() => whatsapp && openStoreWhatsApp(whatsapp)}
-          >
+          <PrimaryButton fullWidth size="sm" onClick={() => openStoreContact(store)}>
             <MessageCircle size={16} />
             WhatsApp
           </PrimaryButton>
@@ -144,18 +134,14 @@ export default function NearestStoreCard({
         <InfoLine icon={MapPin} label="Endereço" value={store.endereco || 'Endereço não informado'} />
         {cityState && <InfoLine label="Cidade/Estado" value={cityState} />}
         {phone && <InfoLine label="Telefone" value={phone} />}
+        {store.rating != null && <InfoLine label="Avaliação Google" value={String(store.rating)} />}
         {store.horario_funcionamento && (
           <InfoLine label="Horário" value={store.horario_funcionamento} />
         )}
-        {whatsapp && <InfoLine label="WhatsApp" value={whatsapp} />}
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <PrimaryButton
-          fullWidth
-          disabled={!whatsapp}
-          onClick={() => whatsapp && openStoreWhatsApp(whatsapp)}
-        >
+        <PrimaryButton fullWidth onClick={() => openStoreContact(store)}>
           <MessageCircle size={18} />
           Falar no WhatsApp
         </PrimaryButton>

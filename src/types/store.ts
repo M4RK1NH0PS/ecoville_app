@@ -22,6 +22,7 @@ export type StoreWithDistance = Store & {
 
 export type DisplayStore = {
   id?: string
+  placeId?: string
   nome: string
   endereco: string
   cidade?: string | null
@@ -29,7 +30,12 @@ export type DisplayStore = {
   telefone?: string | null
   whatsapp: string
   mapsQuery: string
+  mapsUrl?: string | null
+  rating?: number | null
   horario_funcionamento?: string | null
   distanceKm?: number
-  source: 'coverage' | 'database'
+  source: 'coverage' | 'database' | 'places'
 }
+
+export const NO_STORE_MESSAGE =
+  'Não encontramos uma unidade Ecoville próxima. Você pode falar com o atendimento para direcionarmos seu pedido.'

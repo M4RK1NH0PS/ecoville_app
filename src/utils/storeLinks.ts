@@ -1,3 +1,4 @@
+import { DEFAULT_ECOVILLE_WHATSAPP } from '../data/storeCoverage'
 import type { DisplayStore } from '../types/store'
 
 const DEFAULT_WHATSAPP_MESSAGE =
@@ -18,7 +19,7 @@ export function buildWhatsAppUrl(
   whatsapp: string,
   message = DEFAULT_WHATSAPP_MESSAGE,
 ): string {
-  const digits = whatsapp.replace(/\D/g, '')
+  const digits = whatsapp.replace(/\D/g, '') || DEFAULT_ECOVILLE_WHATSAPP
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
@@ -30,6 +31,16 @@ export function openStoreWhatsApp(whatsapp: string): void {
   window.open(buildWhatsAppUrl(whatsapp), '_blank', 'noopener,noreferrer')
 }
 
+export function openSupportWhatsApp(): void {
+  openStoreWhatsApp(DEFAULT_ECOVILLE_WHATSAPP)
+}
+
 export function openStoreDirections(store: DisplayStore): void {
-  window.open(buildMapsUrl(store.mapsQuery), '_blank', 'noopener,noreferrer')
+  const url = store.mapsUrl?.trim() || buildMapsUrl(store.mapsQuery || store.endereco)
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+export function openStoreContact(store: DisplayStore): void {
+  const whatsapp = store.whatsapp?.trim() || store.telefone?.replace(/\D/g, '') || DEFAULT_ECOVILLE_WHATSAPP
+  openStoreWhatsApp(whatsapp)
 }

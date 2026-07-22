@@ -1,8 +1,13 @@
 import {
+  DEFAULT_ECOVILLE_WHATSAPP,
   findStoreByProfileLocation,
   type CoverageStore,
 } from '../data/storeCoverage'
 import { supabase } from '../lib/supabaseClient'
+import {
+  findNearestEcovilleByCoordinates,
+  type PlacesStoreResult,
+} from './locationStoreService'
 import type { Profile } from '../types/auth'
 import type { DisplayStore, Store } from '../types/store'
 
@@ -33,6 +38,26 @@ export function calculateDistanceKm(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
   return earthRadiusKm * c
+}
+
+function phoneToWhatsAppDigits(phone: string | null | undefined): string {
+  const digits = String(phone ?? '').replace(/\D/g, '')
+  return digits || DEFAULT_ECOVILLE_WHATSAPP
+}
+
+function placesToDisplayStore(store: PlacesStoreResult): DisplayStore {
+  return {
+    placeId: store.placeId,
+    nome: store.name,
+    endereco: store.address,
+    telefone: store.phone,
+    whatsapp: phoneToWhatsAppDigits(store.phone),
+    mapsQuery: store.address,
+    mapsUrl: store.mapsUrl,
+    rating: store.rating,
+    distanceKm: store.distanceKm,
+    source: 'places',
+  }
 }
 
 function coverageToDisplayStore(store: CoverageStore): DisplayStore {
@@ -67,12 +92,55 @@ function databaseToDisplayStore(store: Store, distanceKm?: number): DisplayStore
     cidade: store.cidade,
     estado: store.estado,
     telefone: store.telefone,
-    whatsapp: store.whatsapp ?? '',
+    whatsapp: phoneToWhatsAppDigits(store.whatsapp ?? store.telefone),
     mapsQuery: endereco || store.nome,
     horario_funcionamento: store.horario_funcionamento,
     distanceKm,
     source: 'database',
   }
+}
+
+function buildProfileAddress(profile: Profile): string {
+  return [profile.endereco, profile.numero, profile.complemento, profile.bairro]
+    .filter((part) => part?.trim())
+    .join(', ')
+}
+
+async function findStoreFromPlaces(profile: Profile): Promise<DisplayStore | null> {
+  const latitude = profile.latitude != null ? Number(profile.latitude) : null
+  const longitude = profile.longitude != null ? Number(profile.longitude) : null
+
+  const hasCoordinates =
+    latitude != null &&
+    longitude != null &&
+    !Number.isNaN(latitude) &&
+    !Number.isNaN(longitude)
+
+  const hasAddressContext = Boolean(
+    profile.cidade?.trim() ||
+      profile.estado?.trim() ||
+      profile.bairro?.trim() ||
+      profile.endereco?.trim(),
+  )
+
+  if (!hasCoordinates && !hasAddressContext) {
+    return null
+  }
+
+  const result = await findNearestEcovilleByCoordinates({
+    latitude: hasCoordinates ? latitude : null,
+    longitude: hasCoordinates ? longitude : null,
+    city: profile.cidade,
+    state: profile.estado,
+    neighborhood: profile.bairro,
+    address: buildProfileAddress(profile),
+  })
+
+  if (!result.store) {
+    return null
+  }
+
+  return placesToDisplayStore(result.store)
 }
 
 export async function getActiveStores(): Promise<Store[]> {
@@ -135,21 +203,35 @@ async function findStoreFromDatabase(profile: Profile): Promise<DisplayStore | n
   return fallbackStore ? databaseToDisplayStore(fallbackStore) : null
 }
 
+async function findStoreFromCoverage(profile: Profile): Promise<DisplayStore | null> {
+  const coverageStore = findStoreByProfileLocation(profile)
+  return coverageStore ? coverageToDisplayStore(coverageStore) : null
+}
+
 export async function findNearestStore(
   profile: Profile | null,
 ): Promise<DisplayStore | null> {
   if (!profile) return null
 
-  const coverageStore = findStoreByProfileLocation(profile)
-  if (coverageStore) {
-    return coverageToDisplayStore(coverageStore)
+  try {
+    const placesStore = await findStoreFromPlaces(profile)
+    if (placesStore) return placesStore
+  } catch {
+    // Fallback local abaixo
+  }
+
+  try {
+    const coverageStore = await findStoreFromCoverage(profile)
+    if (coverageStore) return coverageStore
+  } catch {
+    // Ignora falha do fallback local
   }
 
   try {
     const databaseStore = await findStoreFromDatabase(profile)
     if (databaseStore) return databaseStore
   } catch {
-    // MVP: ignora falhas da tabela stores e usa apenas cobertura regional
+    // Ignora falha do fallback do banco
   }
 
   return null
