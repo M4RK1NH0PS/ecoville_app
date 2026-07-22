@@ -1,23 +1,9 @@
-import type { Store } from '../types/store'
+import type { DisplayStore } from '../types/store'
 
 const DEFAULT_WHATSAPP_MESSAGE =
   'Olá, vim pelo app Ecoville SmartClean e gostaria de atendimento.'
 
-export function formatStoreFullAddress(store: Store): string {
-  return [
-    store.endereco,
-    store.numero,
-    store.complemento,
-    store.bairro,
-    store.cidade,
-    store.estado,
-    store.cep,
-  ]
-    .filter((part) => part?.trim())
-    .join(', ')
-}
-
-export function formatStoreCityState(store: Store): string {
+export function formatDisplayStoreCityState(store: DisplayStore): string {
   return [store.cidade, store.estado].filter((part) => part?.trim()).join(', ')
 }
 
@@ -36,15 +22,14 @@ export function buildWhatsAppUrl(
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
-export function buildMapsUrl(address: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+export function buildMapsUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
 export function openStoreWhatsApp(whatsapp: string): void {
   window.open(buildWhatsAppUrl(whatsapp), '_blank', 'noopener,noreferrer')
 }
 
-export function openStoreDirections(store: Store): void {
-  const address = formatStoreFullAddress(store)
-  window.open(buildMapsUrl(address), '_blank', 'noopener,noreferrer')
+export function openStoreDirections(store: DisplayStore): void {
+  window.open(buildMapsUrl(store.mapsQuery), '_blank', 'noopener,noreferrer')
 }

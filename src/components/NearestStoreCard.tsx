@@ -1,18 +1,20 @@
 import { Loader2, MapPin, MessageCircle, Navigation, Store } from 'lucide-react'
 import PrimaryButton from './PrimaryButton'
 import SecondaryButton from './SecondaryButton'
-import type { StoreWithDistance } from '../types/store'
-import { LOCATION_EMPTY_MESSAGE } from '../hooks/useLocationForm'
+import {
+  DEFAULT_ECOVILLE_WHATSAPP,
+  NO_COVERAGE_MESSAGE,
+} from '../data/storeCoverage'
+import type { DisplayStore } from '../types/store'
 import {
   formatDistanceKm,
-  formatStoreCityState,
-  formatStoreFullAddress,
+  formatDisplayStoreCityState,
   openStoreDirections,
   openStoreWhatsApp,
 } from '../utils/storeLinks'
 
 type NearestStoreCardProps = {
-  store: StoreWithDistance | null
+  store: DisplayStore | null
   loading?: boolean
   compact?: boolean
   emptyMessage?: string
@@ -23,7 +25,7 @@ export default function NearestStoreCard({
   store,
   loading = false,
   compact = false,
-  emptyMessage = LOCATION_EMPTY_MESSAGE,
+  emptyMessage,
   onUpdateLocation,
 }: NearestStoreCardProps) {
   if (loading) {
@@ -40,6 +42,8 @@ export default function NearestStoreCard({
   }
 
   if (!store) {
+    const message = emptyMessage ?? NO_COVERAGE_MESSAGE
+
     return (
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-start gap-3">
@@ -50,23 +54,34 @@ export default function NearestStoreCard({
             <p className="text-sm font-bold text-dark">
               {compact ? 'Sua loja Ecoville' : 'Loja mais próxima'}
             </p>
-            <p className="mt-1 text-sm text-muted">{emptyMessage}</p>
+            <p className="mt-1 text-sm text-muted">{message}</p>
           </div>
         </div>
 
-        {onUpdateLocation && (
-          <PrimaryButton fullWidth size="sm" className="mt-4" onClick={onUpdateLocation}>
-            <Navigation size={16} />
-            Atualizar localização
+        <div className="mt-4 grid grid-cols-1 gap-2">
+          <PrimaryButton
+            fullWidth
+            size="sm"
+            onClick={() => openStoreWhatsApp(DEFAULT_ECOVILLE_WHATSAPP)}
+          >
+            <MessageCircle size={16} />
+            Falar no WhatsApp
           </PrimaryButton>
-        )}
+
+          {onUpdateLocation && (
+            <SecondaryButton fullWidth size="sm" onClick={onUpdateLocation}>
+              <Navigation size={16} />
+              Atualizar localização
+            </SecondaryButton>
+          )}
+        </div>
       </div>
     )
   }
 
-  const fullAddress = formatStoreFullAddress(store)
-  const cityState = formatStoreCityState(store)
+  const cityState = formatDisplayStoreCityState(store)
   const whatsapp = store.whatsapp?.trim()
+  const phone = store.telefone?.trim()
 
   if (compact) {
     return (
@@ -126,8 +141,9 @@ export default function NearestStoreCard({
       </div>
 
       <div className="space-y-2 rounded-xl bg-bg px-3 py-3">
-        <InfoLine icon={MapPin} label="Endereço" value={fullAddress || 'Endereço não informado'} />
+        <InfoLine icon={MapPin} label="Endereço" value={store.endereco || 'Endereço não informado'} />
         {cityState && <InfoLine label="Cidade/Estado" value={cityState} />}
+        {phone && <InfoLine label="Telefone" value={phone} />}
         {store.horario_funcionamento && (
           <InfoLine label="Horário" value={store.horario_funcionamento} />
         )}

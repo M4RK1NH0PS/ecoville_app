@@ -19,3 +19,17 @@ export type Store = {
 export type StoreWithDistance = Store & {
   distanceKm?: number
 }
+
+export type DisplayStore = {
+  id?: string
+  nome: string
+  endereco: string
+  cidade?: string | null
+  estado?: string | null
+  telefone?: string | null
+  whatsapp: string
+  mapsQuery: string
+  horario_funcionamento?: string | null
+  distanceKm?: number
+  source: 'coverage' | 'database'
+}

@@ -3,12 +3,12 @@ import { useAuth } from '../context/AuthContext'
 import { getProfile } from '../services/profileService'
 import { findNearestStore } from '../services/storeService'
 import type { Profile } from '../types/auth'
-import type { StoreWithDistance } from '../types/store'
+import type { DisplayStore } from '../types/store'
 
 export function useUserStore() {
   const { user } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [store, setStore] = useState<StoreWithDistance | null>(null)
+  const [store, setStore] = useState<DisplayStore | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [loadingStore, setLoadingStore] = useState(false)
   const [error, setError] = useState('')
@@ -27,15 +27,9 @@ export function useUserStore() {
       setLoadingProfile(false)
       setLoadingStore(true)
 
-      try {
-        const nearestStore = await findNearestStore(profileData)
-        if (mounted.current) {
-          setStore(nearestStore)
-        }
-      } catch {
-        if (mounted.current) {
-          setStore(null)
-        }
+      const matchedStore = await findNearestStore(profileData)
+      if (mounted.current) {
+        setStore(matchedStore)
       }
     } catch {
       if (mounted.current) {

@@ -83,7 +83,7 @@ export function useLocationForm(initialValues: UserLocationFields = EMPTY_LOCATI
         bairro: data.bairro || prev.bairro,
         endereco: data.logradouro || prev.endereco,
       }))
-      setCepMessage('Endereço preenchido automaticamente')
+      setCepMessage('Endereço encontrado')
     } catch {
       setCepMessage('Não foi possível buscar o CEP agora. Tente novamente em instantes.')
     } finally {

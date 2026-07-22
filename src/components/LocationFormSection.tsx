@@ -90,7 +90,7 @@ export default function LocationFormSection({
       {loadingCep && (
         <div className="flex items-center gap-2 text-sm text-muted">
           <Loader2 size={16} className="animate-spin text-royal" />
-          Buscando endereço pelo CEP...
+          Buscando endereço...
         </div>
       )}
 
