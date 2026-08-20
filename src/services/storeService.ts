@@ -214,6 +214,13 @@ export async function findNearestStore(
   if (!profile) return null
 
   try {
+    const databaseStore = await findStoreFromDatabase(profile)
+    if (databaseStore) return databaseStore
+  } catch {
+    // Ignora falha do banco e tenta os fallbacks abaixo
+  }
+
+  try {
     const placesStore = await findStoreFromPlaces(profile)
     if (placesStore) return placesStore
   } catch {
@@ -225,13 +232,6 @@ export async function findNearestStore(
     if (coverageStore) return coverageStore
   } catch {
     // Ignora falha do fallback local
-  }
-
-  try {
-    const databaseStore = await findStoreFromDatabase(profile)
-    if (databaseStore) return databaseStore
-  } catch {
-    // Ignora falha do fallback do banco
   }
 
   return null

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { fetchCep, formatCep } from '../services/cepService'
+import { fetchCep, formatCep, geocodeAddressFree } from '../services/cepService'
 import { EMPTY_LOCATION, type UserLocationFields } from '../types/auth'
 
 const GEO_DENIED_MESSAGE =
@@ -75,6 +75,25 @@ export function useLocationForm(initialValues: UserLocationFields = EMPTY_LOCATI
         return
       }
 
+      let latitude = data.latitude ?? null
+      let longitude = data.longitude ?? null
+
+      if (latitude == null || longitude == null) {
+        const addressQuery = [data.logradouro, data.bairro, data.localidade, data.uf, 'Brasil']
+          .filter((part) => part?.trim())
+          .join(', ')
+
+        try {
+          const geocoded = await geocodeAddressFree(addressQuery)
+          if (geocoded) {
+            latitude = geocoded.latitude
+            longitude = geocoded.longitude
+          }
+        } catch {
+          // Geocodificação por endereço indisponível; segue sem coordenadas
+        }
+      }
+
       setValues((prev) => ({
         ...prev,
         cep: formatted,
@@ -82,6 +101,8 @@ export function useLocationForm(initialValues: UserLocationFields = EMPTY_LOCATI
         cidade: data.localidade || prev.cidade,
         bairro: data.bairro || prev.bairro,
         endereco: data.logradouro || prev.endereco,
+        latitude: latitude ?? prev.latitude,
+        longitude: longitude ?? prev.longitude,
       }))
       setCepMessage('Endereço encontrado')
     } catch {

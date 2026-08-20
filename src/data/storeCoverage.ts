@@ -16,27 +16,13 @@ export const DEFAULT_ECOVILLE_WHATSAPP = '5511965862948'
 export const NO_COVERAGE_MESSAGE =
   'Ainda não encontramos uma unidade definida para sua região. Fale com a Ecoville pelo WhatsApp para direcionarmos seu atendimento.'
 
-export const storeCoverage: CoverageStore[] = [
-  {
-    storeName: 'Ecoville Barueri',
-    cities: ['Barueri', 'Jandira', 'Itapevi', 'Santana de Parnaíba', 'Alphaville'],
-    state: 'SP',
-    whatsapp: '5511965862948',
-    phone: '(11) 96586-2948',
-    address: 'Endereço da Ecoville Barueri aqui',
-    mapsQuery: 'Ecoville Barueri',
-  },
-  {
-    storeName: 'Ecoville Lapa',
-    cities: ['São Paulo'],
-    neighborhoods: ['Lapa', 'Vila Leopoldina', 'Perdizes', 'Pompéia'],
-    state: 'SP',
-    whatsapp: '5511999998888',
-    phone: '(11) 99999-8888',
-    address: 'Endereço da Ecoville Lapa aqui',
-    mapsQuery: 'Ecoville Lapa',
-  },
-]
+// Este fallback só deve ser usado com dados reais e confirmados de cada loja.
+// Cadastre as lojas de verdade na tabela `stores` do Supabase (com latitude/longitude)
+// para que a busca por CEP calcule a distância real — veja findNearestStore em
+// src/services/storeService.ts. Enquanto não houver lojas cadastradas no banco,
+// deixe esta lista vazia: mostrar um endereço ou WhatsApp inventado para o cliente
+// é pior do que dizer "não encontramos, fale com o atendimento".
+export const storeCoverage: CoverageStore[] = []
 
 export function normalizeLocationText(text: string | null | undefined): string {
   return String(text || '')
